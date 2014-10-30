@@ -31,10 +31,13 @@ buildNewIssueOrPRMessage = (data, eventType, callback) ->
     when "closed"
       actionMsg = "Closed"
     else return
+  
+  console.log "D", actionMsg
 
   mentioned_line = ''
   if pr_or_issue.body?
     mentioned_line = extractMentionsFromBody(pr_or_issue.body)
+  console.log "E"
   callback "#{actionMsg} #{eventType.replace('_', ' ')} \"#{pr_or_issue.title}\" by #{pr_or_issue.user.login}: #{pr_or_issue.html_url}#{mentioned_line}"
 
 module.exports =
@@ -45,6 +48,7 @@ module.exports =
     callback "#{data.comment.user.login} commented on an issue: #{data.comment.html_url}"
 
   pull_request: (data, callback) ->
+    console.log "C", data
     buildNewIssueOrPRMessage(data, 'pull_request', callback)
 
   pull_request_review_comment: (data, callback) ->
