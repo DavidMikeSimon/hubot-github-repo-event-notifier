@@ -22,31 +22,40 @@ extractMentionsFromBody = (body) ->
 
 buildNewIssueOrPRMessage = (data, eventType, callback) ->
   pr_or_issue = data[eventType]
-  if data.action == 'opened'
-    mentioned_line = ''
-    if pr_or_issue.body?
-      mentioned_line = extractMentionsFromBody(pr_or_issue.body)
-    callback "New #{eventType.replace('_', ' ')} \"#{pr_or_issue.title}\" by #{pr_or_issue.user.login}: #{pr_or_issue.html_url}#{mentioned_line}"
+  return unless pr_or_issue.body?
+
+  switch data.action
+    when "opened"
+      actionMsg = "New"
+    when "reopened"
+      actionMsg = "Reopened"
+    when "closed"
+      actionMsg = "Closed"
+    else return
+
+  mentioned_line = ''
+  mentioned_line = extractMentionsFromBody(pr_or_issue.body)
+  callback "#{actionMsg} #{eventType.replace('_', ' ')} \"#{pr_or_issue.title}\" by #{pr_or_issue.user.login}: #{pr_or_issue.html_url}#{mentioned_line}"
 
 module.exports =
   issues: (data, callback) ->
     buildNewIssueOrPRMessage(data, 'issue', callback)
 
   issue_comment: (data, callback) ->
-    callback "#{data.comment.user.login} commented on an issue, see it here: #{data.comment.html_url}"
+    callback "#{data.comment.user.login} commented on an issue: #{data.comment.html_url}"
 
   pull_request: (data, callback) ->
-    callback "#{data.sender.login} #{data.action} a pull request titled \"#{data.pull_request.title}\", see it here: #{data.pull_request.html_url}"
+    buildNewIssueOrPRMessage(data, 'pull_request', callback)
 
   pull_request_review_comment: (data, callback) ->
-    callback "#{data.comment.user.login} commented on a pull request, see it here: #{data.comment.html_url}"
+    callback "#{data.comment.user.login} commented on a pull request: #{data.comment.html_url}"
 
   push: (data, callback) ->
     if ! data.created
-      callback "#{data.commits.length} new commit(s) pushed by #{data.pusher.name}, see them here: #{data.compare}"
+      callback "#{data.commits.length} new commit(s) pushed by #{data.pusher.name}: #{data.compare}"
 
   commit_comment: (data, callback) ->
-    callback "#{data.comment.user.login} commented on a commit, see it here: #{data.comment.html_url}"
+    callback "#{data.comment.user.login} commented on a commit: #{data.comment.html_url}"
 
   member: (data, callback) ->
     callback "#{data.member.login} has been #{data.action} as a contributor!"
@@ -67,7 +76,7 @@ module.exports =
     callback "The #{data.team.name} team now has #{data.team.permission} access to #{data.repository.full_name}"
 
   release: (data, callback) ->
-    callback "#{data.release.name} has been #{data.action}! See it here: #{data.release.html_url}"
+    callback "#{data.release.name} has been #{data.action}: #{data.release.html_url}"
 
   page_build: (data, callback) ->
     build = data.build
