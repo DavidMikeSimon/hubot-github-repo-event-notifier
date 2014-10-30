@@ -22,7 +22,6 @@ extractMentionsFromBody = (body) ->
 
 buildNewIssueOrPRMessage = (data, eventType, callback) ->
   pr_or_issue = data[eventType]
-  return unless pr_or_issue.body?
 
   switch data.action
     when "opened"
@@ -34,7 +33,8 @@ buildNewIssueOrPRMessage = (data, eventType, callback) ->
     else return
 
   mentioned_line = ''
-  mentioned_line = extractMentionsFromBody(pr_or_issue.body)
+  if pr_or_issue.body?
+    mentioned_line = extractMentionsFromBody(pr_or_issue.body)
   callback "#{actionMsg} #{eventType.replace('_', ' ')} \"#{pr_or_issue.title}\" by #{pr_or_issue.user.login}: #{pr_or_issue.html_url}#{mentioned_line}"
 
 module.exports =
